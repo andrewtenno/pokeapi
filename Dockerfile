@@ -1,10 +1,8 @@
 # Build the app on top of Ubuntu
-FROM ubuntu:xenial
-
-RUN echo 'deb http://ppa.launchpad.net/chris-lea/redis-server/ubuntu xenial main' > /etc/apt/sources.list.d/redis-server.list && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C7917B12
+FROM resin/rpi-raspbian:latest
 
 # Patch and Install Dependencies
-RUN apt-get -y update && apt-get -y install git python-dev make python-pip libpq-dev postgresql postgresql-contrib redis-server && apt-get -y clean
+RUN apt-get -y update && apt-get -y install git gcc python-dev python-setuptools make python-pip libpq-dev postgresql postgresql-contrib redis-server && apt-get -y clean
 
 # Updating redis config
 RUN sed -i 's/# bind 127\.0\.0\.1/bind 127\.0\.0\.1/' /etc/redis/redis.conf
@@ -19,13 +17,13 @@ ADD test-requirements.txt /app/test-requirements.txt
 WORKDIR /app/
 
 # Build the application
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Add the application code to the image
 ADD . /app/
 
 # Start postgres database and use it while it is running in the container
-# Create the default db user (ash) 
+# Create the default db user (ash)
 RUN service postgresql start                                 && \
     service redis-server start                               && \
     su - postgres -c "psql --command \"CREATE USER ash WITH PASSWORD 'pokemon'\"" 	&& \
